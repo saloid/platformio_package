@@ -25,6 +25,7 @@
 #include "ESP8266WiFi.h"
 #include "ESP8266WiFiGeneric.h"
 #include "ESP8266WiFiSTA.h"
+#include "PolledTimeout.h"
 
 #include "c_types.h"
 #include "ets_sys.h"
@@ -500,26 +501,21 @@ bool ESP8266WiFiSTAClass::getAutoReconnect()
  * returns the status reached or disconnect if STA is off
  * @return wl_status_t
  */
-uint8_t ESP8266WiFiSTAClass::waitForConnectResult()
+int8_t ESP8266WiFiSTAClass::waitForConnectResult(unsigned long timeoutLength)
 {
     //1 and 3 have STA enabled
-    ETS_SPI_INTR_DISABLE();
-    ETS_UART_INTR_DISABLE();
-    
-    if ((wifi_get_opmode() & 1) == 0)
-    {
+    if((wifi_get_opmode() & 1) == 0) {
         return WL_DISCONNECTED;
     }
-    while (status() == WL_DISCONNECTED)
-    {
-        delay(100);
+    using esp8266::polledTimeout::oneShot;
+    oneShot timeout(timeoutLength); // number of milliseconds to wait before returning timeout error
+    while(!timeout) {
+        yield();
+        if(status() != WL_DISCONNECTED) {
+            return status();
+        }
     }
-
-    auto exitStatus = status();
-    ETS_SPI_INTR_ENABLE();
-    ETS_UART_INTR_ENABLE();
-
-    return (exitStatus);
+    return -1; // -1 indicates timeout
 }
 
 /**
