@@ -72,6 +72,7 @@ void ICACHE_RAM_ATTR _hspi_slave_isr_handler(void *arg)
 
 void hspi_slave_begin(uint8_t status_len, void * arg)
 {
+    status_len &= 7;
     if(status_len > 4) {
         status_len = 4;    //max 32 bits
     }
@@ -84,7 +85,7 @@ void hspi_slave_begin(uint8_t status_len, void * arg)
     pinMode(MISO, SPECIAL);
     pinMode(MOSI, SPECIAL);
 
-    SPI1S = SPISE | SPISBE | SPISRBIE | SPISWBIE | SPISRSIE | SPISWSIE | SPISTRIE;//0x3E0; // SPI_SLAVE_REG
+    SPI1S = SPISE | SPISBE | 0x3E0; // SPI_SLAVE_REG
     SPI1U = SPIUMISOH | SPIUCOMMAND | SPIUSSE; // SPI_USER_REG
     SPI1CLK = 0;
     SPI1U2 = (7 << SPILCOMMAND); // SPI_USER2_REG

@@ -153,7 +153,6 @@ bool ESP8266WiFiAPClass::softAP(const char *ssid, const char *passphrase, int ch
     if (!softap_config_equal(conf, conf_compare))
     {
 
-        ETS_SPI_INTR_DISABLE();
         ETS_UART_INTR_DISABLE();
 
         if (WiFi._persistent)
@@ -164,7 +163,6 @@ bool ESP8266WiFiAPClass::softAP(const char *ssid, const char *passphrase, int ch
         {
             ret = wifi_softap_set_config_current(&conf);
         }
-        ETS_SPI_INTR_ENABLE();
         ETS_UART_INTR_ENABLE();
 
         if (!ret)
@@ -333,7 +331,6 @@ bool ESP8266WiFiAPClass::softAPdisconnect(bool wifioff)
     *conf.ssid = 0;
     *conf.password = 0;
     conf.authmode = AUTH_OPEN;
-    ETS_SPI_INTR_DISABLE();
     ETS_UART_INTR_DISABLE();
     if (WiFi._persistent)
     {
@@ -343,7 +340,6 @@ bool ESP8266WiFiAPClass::softAPdisconnect(bool wifioff)
     {
         ret = wifi_softap_set_config_current(&conf);
     }
-    ETS_SPI_INTR_ENABLE();
     ETS_UART_INTR_ENABLE();
 
     if (!ret)

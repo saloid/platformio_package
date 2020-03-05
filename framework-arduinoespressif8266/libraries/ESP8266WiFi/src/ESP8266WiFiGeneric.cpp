@@ -402,14 +402,12 @@ bool ESP8266WiFiGenericClass::mode(WiFiMode_t m) {
         // safe to call even if not started
         wifi_station_dhcpc_stop();
 
-    ETS_SPI_INTR_DISABLE();
     ETS_UART_INTR_DISABLE();
     if(_persistent) {
         ret = wifi_set_opmode(m);
     } else {
         ret = wifi_set_opmode_current(m);
     }
-    ETS_SPI_INTR_ENABLE();
     ETS_UART_INTR_ENABLE();
     return ret;
 }

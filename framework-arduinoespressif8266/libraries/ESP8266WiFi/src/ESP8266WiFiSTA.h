@@ -57,7 +57,7 @@ class ESP8266WiFiSTAClass {
         bool setAutoReconnect(bool autoReconnect);
         bool getAutoReconnect();
 
-        int8_t waitForConnectResult(unsigned long timeoutLength = 60000);
+        uint8_t waitForConnectResult();
 
         // STA network info
         IPAddress localIP();

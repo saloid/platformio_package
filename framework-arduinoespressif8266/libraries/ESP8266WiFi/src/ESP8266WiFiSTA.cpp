@@ -25,7 +25,6 @@
 #include "ESP8266WiFi.h"
 #include "ESP8266WiFiGeneric.h"
 #include "ESP8266WiFiSTA.h"
-#include "PolledTimeout.h"
 
 #include "c_types.h"
 #include "ets_sys.h"
@@ -135,14 +134,13 @@ bool ESP8266WiFiSTAClass::_useInsecureWEP = false;
  */
 wl_status_t ESP8266WiFiSTAClass::begin(const char *ssid, const char *passphrase, int32_t channel, const uint8_t *bssid, bool connect)
 {
-    //ETS_INTR_LOCK();
-    DEBUGV("-1");
+
     if (!WiFi.enableSTA(true))
     {
         // enable STA failed
         return WL_CONNECT_FAILED;
     }
-    DEBUGV("-2");
+
     if (!ssid || *ssid == 0x00 || strlen(ssid) > 32)
     {
         // fail SSID too long or missing!
@@ -155,7 +153,7 @@ wl_status_t ESP8266WiFiSTAClass::begin(const char *ssid, const char *passphrase,
         // fail passphrase too long!
         return WL_CONNECT_FAILED;
     }
-    DEBUGV("-3");
+
     struct station_config conf;
     conf.threshold.authmode = (passphraseLen == 0) ? AUTH_OPEN : (_useInsecureWEP ? AUTH_WEP : AUTH_WPA_PSK);
 
@@ -163,7 +161,7 @@ wl_status_t ESP8266WiFiSTAClass::begin(const char *ssid, const char *passphrase,
         memcpy(reinterpret_cast<char *>(conf.ssid), ssid, 32); //copied in without null term
     else
         strcpy(reinterpret_cast<char *>(conf.ssid), ssid);
-    DEBUGV("-4");
+
     if (passphrase)
     {
         if (passphraseLen == 64) // it's not a passphrase, is the PSK, which is copied into conf.password without null term
@@ -175,7 +173,7 @@ wl_status_t ESP8266WiFiSTAClass::begin(const char *ssid, const char *passphrase,
     {
         *conf.password = 0;
     }
-    DEBUGV("-5");
+
     conf.threshold.rssi = -127;
 #ifdef NONOSDK3V0
     conf.open_and_wep_mode_disable = !(_useInsecureWEP || *conf.password == 0);
@@ -190,7 +188,7 @@ wl_status_t ESP8266WiFiSTAClass::begin(const char *ssid, const char *passphrase,
     {
         conf.bssid_set = 0;
     }
-    DEBUGV("-6");
+
     struct station_config conf_compare;
     if (WiFi._persistent)
     {
@@ -200,14 +198,13 @@ wl_status_t ESP8266WiFiSTAClass::begin(const char *ssid, const char *passphrase,
     {
         wifi_station_get_config(&conf_compare);
     }
-    DEBUGV("-7");
+
     if (sta_config_equal(conf_compare, conf))
     {
         DEBUGV("sta config unchanged");
     }
     else
     {
-        ETS_SPI_INTR_DISABLE();
         ETS_UART_INTR_DISABLE();
 
         if (WiFi._persistent)
@@ -218,29 +215,27 @@ wl_status_t ESP8266WiFiSTAClass::begin(const char *ssid, const char *passphrase,
         {
             wifi_station_set_config_current(&conf);
         }
-        ETS_SPI_INTR_ENABLE();
+
         ETS_UART_INTR_ENABLE();
     }
-    DEBUGV("-8");
-    ETS_SPI_INTR_DISABLE();
+
     ETS_UART_INTR_DISABLE();
     if (connect)
     {
         wifi_station_connect();
     }
-    ETS_SPI_INTR_ENABLE();
     ETS_UART_INTR_ENABLE();
-    DEBUGV("-9");
+
     if (channel > 0 && channel <= 13)
     {
         wifi_set_channel(channel);
     }
-    DEBUGV("-10");
+
     if (!_useStaticIp)
     {
         wifi_station_dhcpc_start();
     }
-    DEBUGV("-11");
+
     return status();
 }
 
@@ -267,10 +262,8 @@ wl_status_t ESP8266WiFiSTAClass::begin()
         return WL_CONNECT_FAILED;
     }
 
-    ETS_SPI_INTR_DISABLE();
     ETS_UART_INTR_DISABLE();
     wifi_station_connect();
-    ETS_SPI_INTR_ENABLE();
     ETS_UART_INTR_ENABLE();
 
     if (!_useStaticIp)
@@ -419,7 +412,6 @@ bool ESP8266WiFiSTAClass::disconnect(bool wifioff)
     *conf.ssid = 0;
     *conf.password = 0;
 
-    ETS_SPI_INTR_DISABLE();
     ETS_UART_INTR_DISABLE();
     if (WiFi._persistent)
     {
@@ -430,13 +422,12 @@ bool ESP8266WiFiSTAClass::disconnect(bool wifioff)
         wifi_station_set_config_current(&conf);
     }
     ret = wifi_station_disconnect();
-    
+    ETS_UART_INTR_ENABLE();
+
     if (wifioff)
     {
         WiFi.enableSTA(false);
     }
-    ETS_SPI_INTR_ENABLE();
-    ETS_UART_INTR_ENABLE();
 
     return ret;
 }
@@ -459,10 +450,8 @@ bool ESP8266WiFiSTAClass::isConnected()
 bool ESP8266WiFiSTAClass::setAutoConnect(bool autoConnect)
 {
     bool ret;
-    ETS_SPI_INTR_DISABLE();
     ETS_UART_INTR_DISABLE();
     ret = wifi_station_set_auto_connect(autoConnect);
-    ETS_SPI_INTR_ENABLE();
     ETS_UART_INTR_ENABLE();
     return ret;
 }
@@ -501,21 +490,18 @@ bool ESP8266WiFiSTAClass::getAutoReconnect()
  * returns the status reached or disconnect if STA is off
  * @return wl_status_t
  */
-int8_t ESP8266WiFiSTAClass::waitForConnectResult(unsigned long timeoutLength)
+uint8_t ESP8266WiFiSTAClass::waitForConnectResult()
 {
     //1 and 3 have STA enabled
-    if((wifi_get_opmode() & 1) == 0) {
+    if ((wifi_get_opmode() & 1) == 0)
+    {
         return WL_DISCONNECTED;
     }
-    using esp8266::polledTimeout::oneShot;
-    oneShot timeout(timeoutLength); // number of milliseconds to wait before returning timeout error
-    while(!timeout) {
-        yield();
-        if(status() != WL_DISCONNECTED) {
-            return status();
-        }
+    while (status() == WL_DISCONNECTED)
+    {
+        delay(100);
     }
-    return -1; // -1 indicates timeout
+    return status();
 }
 
 /**
