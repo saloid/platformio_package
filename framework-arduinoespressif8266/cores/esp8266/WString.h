@@ -83,6 +83,10 @@ class String {
             }
         }
 
+        inline bool isEmpty(void) const {
+            return length() == 0;
+        }
+
         // creates a copy of the assigned value.  if the value is null or
         // invalid, or if the memory allocation fails, the string will be
         // marked as invalid ("if (s)" will be false).

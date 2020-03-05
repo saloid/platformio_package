@@ -87,7 +87,11 @@ void preloop_update_frequency() {
 extern "C" void esp_yield() {
     
     if (cont_can_yield(g_pcont)) {
+		ETS_SPI_INTR_DISABLE();
+		ETS_UART_INTR_DISABLE();
         cont_yield(g_pcont);
+		ETS_SPI_INTR_ENABLE();
+		ETS_UART_INTR_ENABLE();
     }
 }
 
