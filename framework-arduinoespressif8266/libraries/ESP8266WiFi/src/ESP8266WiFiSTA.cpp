@@ -136,13 +136,11 @@ bool ESP8266WiFiSTAClass::_useInsecureWEP = false;
 wl_status_t ESP8266WiFiSTAClass::begin(const char *ssid, const char *passphrase, int32_t channel, const uint8_t *bssid, bool connect)
 {
     //ETS_INTR_LOCK();
-    DEBUGV("-1");
     if (!WiFi.enableSTA(true))
     {
         // enable STA failed
         return WL_CONNECT_FAILED;
     }
-    DEBUGV("-2");
     if (!ssid || *ssid == 0x00 || strlen(ssid) > 32)
     {
         // fail SSID too long or missing!
@@ -155,7 +153,6 @@ wl_status_t ESP8266WiFiSTAClass::begin(const char *ssid, const char *passphrase,
         // fail passphrase too long!
         return WL_CONNECT_FAILED;
     }
-    DEBUGV("-3");
     struct station_config conf;
     conf.threshold.authmode = (passphraseLen == 0) ? AUTH_OPEN : (_useInsecureWEP ? AUTH_WEP : AUTH_WPA_PSK);
 
@@ -163,7 +160,6 @@ wl_status_t ESP8266WiFiSTAClass::begin(const char *ssid, const char *passphrase,
         memcpy(reinterpret_cast<char *>(conf.ssid), ssid, 32); //copied in without null term
     else
         strcpy(reinterpret_cast<char *>(conf.ssid), ssid);
-    DEBUGV("-4");
     if (passphrase)
     {
         if (passphraseLen == 64) // it's not a passphrase, is the PSK, which is copied into conf.password without null term
@@ -175,7 +171,6 @@ wl_status_t ESP8266WiFiSTAClass::begin(const char *ssid, const char *passphrase,
     {
         *conf.password = 0;
     }
-    DEBUGV("-5");
     conf.threshold.rssi = -127;
 #ifdef NONOSDK3V0
     conf.open_and_wep_mode_disable = !(_useInsecureWEP || *conf.password == 0);
@@ -190,7 +185,6 @@ wl_status_t ESP8266WiFiSTAClass::begin(const char *ssid, const char *passphrase,
     {
         conf.bssid_set = 0;
     }
-    DEBUGV("-6");
     struct station_config conf_compare;
     if (WiFi._persistent)
     {
@@ -200,7 +194,6 @@ wl_status_t ESP8266WiFiSTAClass::begin(const char *ssid, const char *passphrase,
     {
         wifi_station_get_config(&conf_compare);
     }
-    DEBUGV("-7");
     if (sta_config_equal(conf_compare, conf))
     {
         DEBUGV("sta config unchanged");
@@ -221,7 +214,6 @@ wl_status_t ESP8266WiFiSTAClass::begin(const char *ssid, const char *passphrase,
         ETS_SPI_INTR_ENABLE();
         ETS_UART_INTR_ENABLE();
     }
-    DEBUGV("-8");
     ETS_SPI_INTR_DISABLE();
     ETS_UART_INTR_DISABLE();
     if (connect)
@@ -230,17 +222,14 @@ wl_status_t ESP8266WiFiSTAClass::begin(const char *ssid, const char *passphrase,
     }
     ETS_SPI_INTR_ENABLE();
     ETS_UART_INTR_ENABLE();
-    DEBUGV("-9");
     if (channel > 0 && channel <= 13)
     {
         wifi_set_channel(channel);
     }
-    DEBUGV("-10");
     if (!_useStaticIp)
     {
         wifi_station_dhcpc_start();
     }
-    DEBUGV("-11");
     return status();
 }
 
