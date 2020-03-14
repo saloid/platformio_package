@@ -580,6 +580,8 @@ bool EspClass::updateSketch(Stream& in, uint32_t size, bool restartOnFail, bool 
 static const int FLASH_INT_MASK = ((B10 << 8) | B00111010);
 
 bool EspClass::flashEraseSector(uint32_t sector) {
+    esp8266::InterruptLock lock;
+    (void)lock;
     int rc = spi_flash_erase_sector(sector);
     return rc == 0;
 }

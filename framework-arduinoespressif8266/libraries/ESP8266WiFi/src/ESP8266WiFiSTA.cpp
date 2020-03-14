@@ -183,6 +183,7 @@ wl_status_t ESP8266WiFiSTAClass::begin(const char* ssid, const char *passphrase,
         DEBUGV("sta config unchanged");
     }
     else {
+        ETS_SPI_INTR_DISABLE();
         ETS_UART_INTR_DISABLE();
 
         if(WiFi._persistent) {
@@ -190,14 +191,15 @@ wl_status_t ESP8266WiFiSTAClass::begin(const char* ssid, const char *passphrase,
         } else {
             wifi_station_set_config_current(&conf);
         }
-
+        ETS_SPI_INTR_ENABLE();
         ETS_UART_INTR_ENABLE();
     }
-
+    ETS_SPI_INTR_DISABLE();
     ETS_UART_INTR_DISABLE();
     if(connect) {
         wifi_station_connect();
     }
+    ETS_SPI_INTR_ENABLE();
     ETS_UART_INTR_ENABLE();
 
     if(channel > 0 && channel <= 13) {
@@ -230,8 +232,10 @@ wl_status_t ESP8266WiFiSTAClass::begin() {
         return WL_CONNECT_FAILED;
     }
 
+    ETS_SPI_INTR_DISABLE();
     ETS_UART_INTR_DISABLE();
     wifi_station_connect();
+    ETS_SPI_INTR_ENABLE();
     ETS_UART_INTR_ENABLE();
 
     if(!_useStaticIp) {
@@ -380,18 +384,21 @@ bool ESP8266WiFiSTAClass::disconnect(bool wifioff) {
     else
         ret = true;
 
+    ETS_SPI_INTR_DISABLE();
     ETS_UART_INTR_DISABLE();
+
     if(WiFi._persistent) {
         wifi_station_set_config(&conf);
     } else {
         wifi_station_set_config_current(&conf);
     }
 
-    ETS_UART_INTR_ENABLE();
-
     if(wifioff) {
         WiFi.enableSTA(false);
     }
+
+    ETS_SPI_INTR_ENABLE();
+    ETS_UART_INTR_ENABLE();
 
     return ret;
 }
@@ -413,8 +420,10 @@ bool ESP8266WiFiSTAClass::isConnected() {
  */
 bool ESP8266WiFiSTAClass::setAutoConnect(bool autoConnect) {
     bool ret;
+    ETS_SPI_INTR_DISABLE();
     ETS_UART_INTR_DISABLE();
     ret = wifi_station_set_auto_connect(autoConnect);
+    ETS_SPI_INTR_ENABLE();
     ETS_UART_INTR_ENABLE();
     return ret;
 }

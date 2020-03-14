@@ -96,8 +96,12 @@ extern "C" bool can_yield() {
 
 static inline void esp_yield_within_cont() __attribute__((always_inline));
 static void esp_yield_within_cont() {
+        ETS_SPI_INTR_DISABLE();
+        ETS_UART_INTR_DISABLE();
         cont_yield(g_pcont);
         run_scheduled_recurrent_functions();
+        ETS_SPI_INTR_ENABLE();
+        ETS_UART_INTR_ENABLE();
 }
 
 extern "C" void __esp_yield() {

@@ -427,12 +427,14 @@ bool ESP8266WiFiGenericClass::mode(WiFiMode_t m, WiFiState* state) {
     }
 
     bool ret = false;
+    ETS_SPI_INTR_DISABLE();
     ETS_UART_INTR_DISABLE();
     if(_persistent) {
         ret = wifi_set_opmode(m);
     } else {
         ret = wifi_set_opmode_current(m);
     }
+    ETS_SPI_INTR_ENABLE();
     ETS_UART_INTR_ENABLE();
 
     if(!ret)
