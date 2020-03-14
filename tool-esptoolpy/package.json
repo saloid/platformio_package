@@ -2,5 +2,5 @@
   "description": "ESP8266 and ESP32 serial bootloader utility",
   "name": "tool-esptoolpy",
   "url": "https://github.com/espressif/esptool",
-  "version": "1.20600.0"
+  "version": "1.20800.0"
 }
